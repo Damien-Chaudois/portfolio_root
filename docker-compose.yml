@@ -1,0 +1,33 @@
+# Point d'entrée unique de toute l'infrastructure du portfolio.
+# Chaque nouveau kata s'ajoute ici comme un nouveau service,
+# avec son propre sous-domaine géré par Nginx.
+
+services:
+
+  # Reverse proxy — point d'entrée unique de tout le trafic HTTP/HTTPS.
+  # Il lit le header "Host" de chaque requête entrante et route
+  # vers le bon container selon le sous-domaine demandé.
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      # On expose uniquement ces deux ports sur le host.
+      # Tout le reste communique sur le réseau Docker interne.
+      - "80:80" # HTTP — redirigé vers HTTPS par Nginx
+      - "443:443" # HTTPS — trafic chiffré TLS
+    volumes:
+      # Fichiers de configuration Nginx — un fichier par service
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Certificats Let's Encrypt — lecture seule, Certbot les gère
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # Logs accessibles depuis le host pour debug
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - portfolio
+
+# Réseau interne Docker — les containers se parlent par leur nom de service.
+# Isolé du host, seul Nginx est exposé vers l'extérieur.
+networks:
+  portfolio:
+    driver: bridge

@@ -1,0 +1,8 @@
+# Logs Nginx — volumineux, sensibles, spécifiques à l'instance
+nginx/logs/
+
+# Variables d'environnement — contiennent les secrets (tokens webhook, etc.)
+.env
+
+# Fichiers temporaires VS Code utilisé pour acceder au vps via ssh
+.vscode/
