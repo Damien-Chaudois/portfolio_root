@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        run: |
+          # Installe la clé SSH privée dans l'environnement de la Action
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          # Ajoute le VPS aux hosts connus pour éviter le prompt de confirmation
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # Connexion SSH — pull la config et recharge Nginx
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd ~/portfolio && git pull && docker compose exec -T nginx nginx -s reload"
+          # Nettoyage — on ne laisse pas de clé privée sur le runner GitHub
+          rm -rf ~/.ssh
