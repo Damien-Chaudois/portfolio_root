@@ -1,8 +1,12 @@
 name: Deploy
 
 on:
+  # Déclenché sur push de ce repo (modification de config infra)
   push:
     branches: [master]
+  # Déclenché par les repos projets via repository_dispatch (nouvelle image)
+  repository_dispatch:
+    types: [deploy]
 
 jobs:
   deploy:
@@ -15,8 +19,8 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           # Ajoute le VPS aux hosts connus pour éviter le prompt de confirmation
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-          # Connexion SSH — pull la config et recharge Nginx
+          # Connexion SSH — pull la config, met à jour les images, redémarre les containers, recharge Nginx
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ~/portfolio && git pull && docker compose exec -T nginx nginx -s reload"
+            "cd ~/portfolio && git pull && docker compose pull && docker compose up -d && docker compose exec -T nginx nginx -s reload"
           # Nettoyage — on ne laisse pas de clé privée sur le runner GitHub
           rm -rf ~/.ssh

@@ -39,9 +39,10 @@ Nginx (container Docker) — TLS termination
    └──▶ validation.kata-X.damien.chaudois.com → container kata-X (env staging)
 
 GitHub Actions (CI/CD)
-   │   Lint + test + build image + push ghcr.io
-   └──▶ Webhook → container adnanh/webhook
-                      └──▶ docker compose pull + up -d
+   ├──▶ Repos projets : lint + test + build image + push ghcr.io
+   │                    └──▶ repository_dispatch → portfolio_root
+   └──▶ portfolio_root : SSH → VPS
+                              └──▶ git pull + docker compose pull + up -d + nginx reload
 ```
 
 **Pourquoi Docker directement sur le host et pas Kubernetes ?**
@@ -171,12 +172,70 @@ server {
 }
 ```
 
-4. **Pousser** — GitHub Actions build l'image, le webhook déclenche `docker compose pull && up -d`
+4. **Pousser** — le repo projet build et pousse l'image sur ghcr.io, puis déclenche un `repository_dispatch` sur portfolio_root qui effectue le redéploiement via SSH
 
 ### Recharger Nginx sans downtime
 
 ```bash
 docker compose exec nginx nginx -s reload
+```
+
+### GitHub Actions — Déploiement automatique
+
+Ce repo est le **point de déploiement central** : il est le seul à exécuter les commandes Docker sur le VPS. Les repos de projets (katas) ne gèrent pas leur propre infra — ils construisent et poussent leur image sur ghcr.io, puis délèguent le redéploiement à ce repo via un `repository_dispatch` GitHub.
+
+**Flux complet :**
+1. Le repo projet build son image et la pousse sur `ghcr.io/damien-chaudois/<projet>:latest`
+2. Il déclenche un `repository_dispatch` sur portfolio_root via l'API GitHub (`event-type: deploy`)
+3. Le workflow `.github/workflows/deploy.yml` se connecte en SSH au VPS
+4. Il exécute : `git pull → docker compose pull → docker compose up -d → nginx reload`
+
+Ce même workflow est aussi déclenché sur tout push sur `master` de ce repo (modification de config infra).
+
+**Connexion SSH :**
+
+| Paramètre | Valeur |
+|---|---|
+| Utilisateur | `damien` |
+| Hôte | `178.104.116.214` (secret `SSH_HOST`) |
+| Port | `22` |
+| Chemin du repo | `~/portfolio` |
+
+**Secrets GitHub à configurer** (`Settings > Secrets and variables > Actions`) :
+
+| Secret | Description |
+|---|---|
+| `SSH_PRIVATE_KEY` | Clé privée ed25519 dédiée à GitHub Actions |
+| `SSH_HOST` | IP du VPS : `178.104.116.214` |
+| `SSH_USER` | Utilisateur SSH : `damien` |
+
+**Préparer la clé SSH GitHub Actions :**
+
+```bash
+# Vérifier si une clé GitHub Actions est déjà autorisée sur le VPS
+cat ~/.ssh/authorized_keys
+
+# Si absente — générer une clé dédiée (en local ou sur le VPS)
+ssh-keygen -t ed25519 -C "github-actions@portfolio" -f ~/.ssh/portfolio_actions
+
+# Ajouter la clé publique au VPS
+ssh-copy-id -i ~/.ssh/portfolio_actions.pub damien@178.104.116.214
+
+# La clé PRIVÉE est la valeur à coller dans le secret SSH_PRIVATE_KEY
+cat ~/.ssh/portfolio_actions
+```
+
+**Comment un repo projet déclenche le déploiement :**
+
+Le repo projet doit avoir un secret `PORTFOLIO_DISPATCH_TOKEN` (PAT GitHub avec scope `repo` sur portfolio_root) et appeler :
+
+```yaml
+- name: Trigger portfolio deploy
+  uses: peter-evans/repository-dispatch@v3
+  with:
+    token: ${{ secrets.PORTFOLIO_DISPATCH_TOKEN }}
+    repository: Damien-Chaudois/portfolio_root
+    event-type: deploy
 ```
 
 ---
