@@ -21,6 +21,6 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           # Connexion SSH — pull la config, met à jour les images, redémarre les containers, recharge Nginx
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ~/portfolio && git pull && docker compose pull && docker compose up -d && docker compose exec -T nginx nginx -s reload"
+            "cd ~/portfolio && git fetch origin && git reset --hard origin/master && docker compose pull && docker compose up -d && docker compose exec -T nginx nginx -s reload"
           # Nettoyage — on ne laisse pas de clé privée sur le runner GitHub
           rm -rf ~/.ssh
