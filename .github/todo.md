@@ -8,11 +8,14 @@ Legende:
 
 Taches conversation en cours:
 
-## GitHub Actions — mise en place complète
+## Isolation du user de déploiement
 
-- x Vérifier le port SSH sur le VPS : port 22 confirmé
-- x Vérifier si une clé SSH GitHub Actions existe déjà dans `~/.ssh/authorized_keys` sur le VPS : clé `github-actions-deploy` présente
-- x Configurer les 3 secrets dans GitHub (`Settings > Secrets and variables > Actions`) : SSH_HOST, SSH_PRIVATE_KEY, SSH_USER confirmés présents
-- x Tester le workflow : pousser un commit sur master et vérifier les logs GitHub Actions
-- x Vérifier que `docker compose pull` ne bloque pas sur l'auth ghcr.io : pas d'images privées dans docker-compose.yml pour l'instant (uniquement nginx:alpine), à reconsidérer lors de l'ajout du premier projet
+- x Adapter le REPO_URL dans `.github/scripts/setup-deploy-user.sh` (remplacer `<GITHUB_USER>`)
+- x Exécuter `.github/scripts/setup-deploy-user.sh` sur le VPS (git clone remplacé par cp depuis ~/portfolio)
+- x Générer une nouvelle paire de clés SSH dédiée à `deploy` (ancienne clé github_actions supprimée de damien)
+- x Supprimer les fichiers `github_actions` et `github_actions.pub` de `/home/damien/.ssh/`
+- x Mettre à jour le secret `SSH_PRIVATE_KEY` dans GitHub avec la nouvelle clé privée
+- x Mettre à jour le secret `SSH_USER` dans GitHub → valeur : `deploy`
+- x Tester le workflow (push sur master, vérifier les logs GitHub Actions)
+- x Optionnel : supprimer `~/portfolio` de l'utilisateur `damien` (`rm -rf ~/portfolio`)
 
