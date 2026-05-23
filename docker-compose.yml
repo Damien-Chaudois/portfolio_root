@@ -4,6 +4,18 @@
 
 services:
 
+  # Page d'accueil principale — damien.chaudois.com
+  # Stratégie actuelle : build local sur le VPS après git pull.
+  # (Évolution prévue : build GitLab CI → push registry → pull VPS)
+  portfolio-index:
+    build: ./frontend   # indique à docker compose où trouver les sources pour le build local
+    image: ghcr.io/damien-chaudois/portfolio-index:latest
+    container_name: portfolio-index
+    restart: unless-stopped
+    networks:
+      - portfolio
+    # Pas de ports exposés sur le host — Nginx route le trafic en interne.
+
   # Reverse proxy — point d'entrée unique de tout le trafic HTTP/HTTPS.
   # Il lit le header "Host" de chaque requête entrante et route
   # vers le bon container selon le sous-domaine demandé.

@@ -1,0 +1,53 @@
+# Pipeline GitLab CI — déploiement sur VPS Hetzner
+#
+# Stratégie actuelle (pragmatique) : git pull + build local + restart services.
+# Le VPS récupère les sources et construit l'image lui-même.
+#
+# Évolution prévue (étape 5 du todo) : build image dans CI → push registry.gitlab.com
+# → pull VPS (VPS ne touche plus jamais git ni les sources).
+
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  # Image légère pour le runner — on n'a besoin que de ssh
+  image: alpine:latest
+
+  before_script:
+    # Installation du client SSH (absent par défaut sur alpine)
+    - apk add --no-cache openssh-client
+
+    # Ajout du VPS aux hôtes connus du runner pour éviter le prompt interactif
+    # "Are you sure you want to continue connecting?" qui bloquerait le pipeline
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+
+    # $VPS_SSH_KEY est une variable GitLab de type "File" :
+    # GitLab écrit la clé privée dans un fichier temporaire et expose son chemin.
+    # SSH exige des permissions 600 (lecture propriétaire uniquement) — sinon il refuse la clé.
+    - chmod 600 $VPS_SSH_KEY
+
+  script:
+    # Connexion SSH au VPS, exécution des commandes de déploiement en chaîne :
+    # 1. git pull           — récupère la dernière version du repo (code front, nginx, compose)
+    # 2. docker compose build portfolio-index
+    #                       — reconstruit l'image à partir de frontend/ (multi-stage Dockerfile)
+    # 3. docker compose up -d
+    #                       — recrée les containers dont l'image a changé, démarre les nouveaux
+    # 4. nginx -s reload    — recharge la config nginx à chaud, sans interruption de service
+    #                         (-T dans exec = mode non-TTY, requis hors terminal interactif)
+    - >
+      ssh -i $VPS_SSH_KEY $VPS_USER@$VPS_HOST
+      "cd ~/portfolio
+      && git pull
+      && docker compose build portfolio-index
+      && docker compose up -d
+      && docker compose exec -T nginx nginx -s reload
+      && echo 'Deploy OK — $(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+
+  # Ne déclenche le job que sur les pushs vers master.
+  # Les merge requests et autres branches n'ont pas accès aux variables de déploiement.
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
