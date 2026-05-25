@@ -1,10 +1,10 @@
 # Pipeline GitLab CI — déploiement sur VPS Hetzner
 #
-# Stratégie actuelle (pragmatique) : git pull + build local + restart services.
-# Le VPS récupère les sources et construit l'image lui-même.
-#
-# Évolution prévue (étape 5 du todo) : build image dans CI → push registry.gitlab.com
-# → pull VPS (VPS ne touche plus jamais git ni les sources).
+# Stratégie : git pull + nginx reload.
+# Le frontend est du HTML/CSS/JS statique servi directement par Nginx depuis
+# le volume ./frontend/dist. Un git pull suffit à mettre à jour le site.
+# nginx -s reload est nécessaire uniquement quand la config nginx change,
+# mais on le lance systématiquement — c'est une opération à chaud sans downtime.
 
 stages:
   - deploy
@@ -26,26 +26,33 @@ deploy:
 
     # $VPS_SSH_KEY est une variable GitLab de type "File" :
     # GitLab écrit la clé privée dans un fichier temporaire et expose son chemin.
+    # sed -i 's/\r//' supprime les retours chariot Windows (\r, CRLF) éventuellement
+    # introduits en copiant la clé depuis Windows — libcrypto rejette tout fichier qui en contient.
     # SSH exige des permissions 600 (lecture propriétaire uniquement) — sinon il refuse la clé.
+    - sed -i 's/\r//' $VPS_SSH_KEY
     - chmod 600 $VPS_SSH_KEY
 
+    # --- DIAGNOSTIC TEMPORAIRE — à supprimer une fois le problème résolu ---
+    # Affiche la première ligne : doit être "-----BEGIN OPENSSH PRIVATE KEY-----"
+    - head -1 $VPS_SSH_KEY
+    # Compte le nombre de lignes : une clé valide en a typiquement une vingtaine
+    - wc -l $VPS_SSH_KEY
+    # Tente de lire la clé et d'en extraire la clé publique — échoue si passphrase ou format invalide
+    - ssh-keygen -y -P "" -f $VPS_SSH_KEY || echo "ECHEC ssh-keygen — clé invalide ou protégée par passphrase"
+    # --- FIN DIAGNOSTIC ---
+
   script:
-    # Connexion SSH au VPS, exécution des commandes de déploiement en chaîne :
-    # 1. git pull           — récupère la dernière version du repo (code front, nginx, compose)
-    # 2. docker compose build portfolio-index
-    #                       — reconstruit l'image à partir de frontend/ (multi-stage Dockerfile)
-    # 3. docker compose up -d
-    #                       — recrée les containers dont l'image a changé, démarre les nouveaux
-    # 4. nginx -s reload    — recharge la config nginx à chaud, sans interruption de service
-    #                         (-T dans exec = mode non-TTY, requis hors terminal interactif)
-    - >
-      ssh -i $VPS_SSH_KEY $VPS_USER@$VPS_HOST
-      "cd ~/portfolio
-      && git pull
-      && docker compose build portfolio-index
-      && docker compose up -d
-      && docker compose exec -T nginx nginx -s reload
-      && echo 'Deploy OK — $(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+    # Connexion SSH au VPS, deux commandes :
+    # 1. git pull        — récupère les derniers fichiers (frontend/dist/, nginx/conf.d/, compose)
+    #                      Nginx sert frontend/dist/ via un volume monté : les fichiers sont
+    #                      immédiatement disponibles sans rebuild ni restart de container.
+    # 2. nginx -s reload — recharge la config nginx à chaud, sans interruption de service
+    #                      (-T dans exec = mode non-TTY, requis hors terminal interactif)
+    - ssh -i $VPS_SSH_KEY $VPS_USER@$VPS_HOST
+        "cd ~/portfolio
+        && git pull
+        && docker compose exec -T nginx nginx -s reload
+        && echo 'Deploy OK'"
 
   # Ne déclenche le job que sur les pushs vers master.
   # Les merge requests et autres branches n'ont pas accès aux variables de déploiement.
