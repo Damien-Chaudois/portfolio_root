@@ -1,216 +1,67 @@
 <!DOCTYPE html>
 <html lang="fr">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Portfolio de Damien Chaudois — Développeur Fullstack .NET" />
-    <title>Damien Chaudois</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Portfolio</title>
     <style>
-      *, *::before, *::after {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      :root {
-        --bg:         #0d0d0d;
-        --bg-card:    #141414;
-        --border:     #2a2a2a;
-        --text:       #e8e8e8;
-        --text-muted: #888;
-        --accent:     #7c6df0;
-        --accent-dim: rgba(124, 109, 240, 0.15);
-        --green:      #4caf84;
-        --green-dim:  rgba(76, 175, 132, 0.15);
-        --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
-        --font-mono:  'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
-      }
-
-      html {
-        font-size: 16px;
-        -webkit-font-smoothing: antialiased;
       }
 
       body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--font-sans);
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        color: #1f2937;
         line-height: 1.6;
-        min-height: 100dvh;
       }
 
-      .layout {
-        max-width: 720px;
+      .container {
+        max-width: 900px;
         margin: 0 auto;
-        padding: 4rem 1.5rem 3rem;
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
+        padding: 0 1rem 2rem;
       }
 
-      /* ── Hero ─────────────────────────────────────────────── */
-      .hero { display: flex; flex-direction: column; gap: 0.75rem; }
-
-      .hero__label {
-        font-family: var(--font-mono);
-        font-size: 0.75rem;
-        color: var(--accent);
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 2rem;
       }
 
-      .hero__name {
-        font-size: clamp(2rem, 6vw, 2.75rem);
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
+      .site-header {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1rem;
+        font-weight: 600;
       }
 
-      .hero__title { font-size: 1.1rem; color: var(--text-muted); }
-
-      .hero__subtitle {
-        margin-top: 0.5rem;
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        max-width: 540px;
-        line-height: 1.7;
+      h1 {
+        margin: 0 0 1rem;
+        font-size: 2rem;
       }
 
-      .hero__links { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
-
-      /* ── Button ───────────────────────────────────────────── */
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        background: transparent;
-        color: var(--text);
-        font-size: 0.875rem;
-        text-decoration: none;
-        transition: border-color 0.15s, color 0.15s;
-      }
-      .btn:hover { border-color: var(--accent); color: var(--accent); }
-
-      /* ── Section ──────────────────────────────────────────── */
-      .section__title {
-        font-size: 0.75rem;
-        font-family: var(--font-mono);
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 1.25rem;
-      }
-
-      /* ── Katas ────────────────────────────────────────────── */
-      .katas { display: flex; flex-direction: column; gap: 0.75rem; }
-
-      .kata {
-        display: block;
-        padding: 1rem 1.25rem;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-      }
-
-      .kata--link {
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.15s;
-      }
-      .kata--link:hover { border-color: var(--accent); }
-
-      .kata__header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.4rem;
-      }
-
-      .kata__name  { font-weight: 500; font-size: 0.95rem; }
-      .kata__desc  { font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); }
-
-      /* ── Badge ────────────────────────────────────────────── */
-      .badge {
-        font-size: 0.7rem;
-        font-family: var(--font-mono);
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
-        text-transform: lowercase;
-      }
-      .badge--live { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,175,132,0.3); }
-      .badge--wip  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(124,109,240,0.3); }
-
-      /* ── Footer ───────────────────────────────────────────── */
-      .footer {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        font-family: var(--font-mono);
-        padding-top: 2rem;
-        border-top: 1px solid var(--border);
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
       }
     </style>
   </head>
   <body>
-    <div class="layout">
-      <header class="hero">
-        <p class="hero__label">portfolio</p>
-        <h1 class="hero__name">Damien Chaudois</h1>
-        <p class="hero__title">Développeur Fullstack .NET</p>
-        <p class="hero__subtitle">
-          Ce site est un laboratoire public. Chaque kata démontre une maîtrise technique
-          concrète — de l'infrastructure jusqu'à l'application.
-        </p>
-        <div class="hero__links">
-          <a href="https://github.com/Damien-Chaudois" target="_blank" rel="noopener noreferrer" class="btn">GitHub</a>
-          <a href="https://gitlab.com/Damien-Chaudois" target="_blank" rel="noopener noreferrer" class="btn">GitLab</a>
-        </div>
-      </header>
+    <header>
+      <div class="site-header">Header bidon</div>
+    </header>
 
+    <div class="container">
       <main>
-        <section>
-          <h2 class="section__title">Katas</h2>
-          <div class="katas" id="katas"></div>
+        <h1>Bienvenue sur la page d'accueil</h1>
+        <section aria-labelledby="katas-title">
+          <h2 id="katas-title">Liste des katas</h2>
+          <ul id="kata-list"></ul>
         </section>
       </main>
-
-      <footer class="footer">
-        <p>Infrastructure hébergée sur Hetzner VPS — déployée via GitLab CI</p>
-      </footer>
     </div>
-
-    <script>
-      const katas = [
-        {
-          name: 'Infrastructure VPS',
-          description: 'Nginx, Docker Compose, TLS wildcard, CI/CD GitLab',
-          url: null,
-          status: 'live',
-        },
-      ]
-
-      function renderKata(kata) {
-        const badge = kata.status === 'live'
-          ? '<span class="badge badge--live">live</span>'
-          : '<span class="badge badge--wip">en cours</span>'
-
-        const inner = `
-          <div class="kata__header">
-            <span class="kata__name">${kata.name}</span>
-            ${badge}
-          </div>
-          <p class="kata__desc">${kata.description}</p>`
-
-        if (kata.url) {
-          return `<a class="kata kata--link" href="${kata.url}" target="_blank" rel="noopener noreferrer">${inner}</a>`
-        }
-        return `<article class="kata">${inner}</article>`
-      }
-
-      document.getElementById('katas').innerHTML = katas.map(renderKata).join('')
-    </script>
   </body>
 </html>

@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh portfolio *)"
+    ],
+    "ask": [
+      "Bash(ssh portfolio sudo *)",
+      "Bash(ssh portfolio \"sudo *)",
+      "Bash(ssh portfolio rm *)",
+      "Bash(ssh portfolio \"rm *)",
+      "Bash(ssh portfolio chmod *)",
+      "Bash(ssh portfolio \"chmod *)",
+      "Bash(ssh portfolio chown *)",
+      "Bash(ssh portfolio \"chown *)",
+      "Bash(ssh portfolio \"docker rm *)",
+      "Bash(ssh portfolio \"docker stop *)",
+      "Bash(ssh portfolio \"docker rmi *)",
+      "Bash(ssh portfolio \"docker compose down*)",
+      "Bash(ssh portfolio \"docker compose rm *)",
+      "Bash(ssh portfolio \"systemctl stop *)",
+      "Bash(ssh portfolio \"systemctl restart *)",
+      "Bash(ssh portfolio \"systemctl start *)",
+      "Bash(ssh portfolio \"systemctl enable *)",
+      "Bash(ssh portfolio \"systemctl disable *)",
+      "Bash(ssh portfolio \"git reset *)",
+      "Bash(ssh portfolio \"git push *)",
+      "Bash(ssh portfolio \"git checkout -- *)"
+    ]
+  }
+}
